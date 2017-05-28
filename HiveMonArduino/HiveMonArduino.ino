@@ -114,7 +114,7 @@ String collectSensorData() {
 }
 
 void rotateServo(int position) {
-  if (position == LOCKED || position == UNLOCKED) {
+  if ((position == LOCKED && !locked) || (position == UNLOCKED && locked)) {
     locked = !locked;
     lockServo.write(position);
   }
