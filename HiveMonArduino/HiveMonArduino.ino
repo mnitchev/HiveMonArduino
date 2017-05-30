@@ -4,6 +4,9 @@
 */
 
 #include <Servo.h>
+#include <Adafruit_Si7021.h>
+
+Adafruit_Si7021 temperatureAndHumiditySensor = Adafruit_Si7021();
 
 const char LOCK = '0';
 const char UNLOCK = '1';
@@ -22,7 +25,7 @@ const int blueLEDPin = 10;
 const int greenLEDPin = 9;
 
 const float baselineTemp = 20.0;
-float angle = 0, dir = 1.0;
+float angle = 0;
 float light;
 int count = 0;
 
@@ -32,6 +35,7 @@ void setup() {
   lockServo.attach(servoPin);
   lockServo.write(UNLOCKED);
   Serial.begin(9600);
+  temperatureAndHumiditySensor.begin();
   lightGreen();
 }
 
@@ -107,9 +111,8 @@ String collectSensorData() {
   light = analogRead(lightPin);
   voltage = getVoltage(temperaturePin);
   piloTemperature = (voltage - 0.5) * 100.0;
-  hiveTemperature = 0.0;
-  humidity = 0.0;
-
+  hiveTemperature = temperatureAndHumiditySensor.readTemperature();
+  humidity = temperatureAndHumiditySensor.readHumidity();
   return serializeData(piloTemperature, hiveTemperature, humidity, light);
 }
 
