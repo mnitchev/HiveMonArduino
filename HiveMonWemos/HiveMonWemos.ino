@@ -32,7 +32,7 @@ void setup() {
 		ESP.restart();
 	}
 	ArduinoOTA.begin();
-
+  
 	server.on("/sensors", handleCollectDataRequest);
 	server.on("/lock", handleLockRequest);
 	server.on("/unlock", handleUnlockRequest);

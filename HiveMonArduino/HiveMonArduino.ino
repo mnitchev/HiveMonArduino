@@ -5,8 +5,7 @@
 
 #include <Servo.h>
 #include <Adafruit_Si7021.h>
-
-Adafruit_Si7021 temperatureAndHumiditySensor = Adafruit_Si7021();
+#include <LiquidCrystal.h>
 
 const char LOCK = '0';
 const char UNLOCK = '1';
@@ -18,11 +17,7 @@ bool locked = false;
 
 const int temperaturePin = A0;
 const int lightPin = A1;
-const int servoPin = 3;
-
-const int redLEDPin = 11;
-const int blueLEDPin = 10;
-const int greenLEDPin = 9;
+const int servoPin = 9;
 
 const float baselineTemp = 20.0;
 float angle = 0;
@@ -30,41 +25,23 @@ float light;
 int count = 0;
 
 Servo lockServo;
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+Adafruit_Si7021 temperatureAndHumiditySensor = Adafruit_Si7021();
 
 void setup() {
+  lcd.begin(16, 2);
   lockServo.attach(servoPin);
   lockServo.write(UNLOCKED);
   Serial.begin(9600);
   temperatureAndHumiditySensor.begin();
-  lightGreen();
 }
 
 void loop() {
   if (serialHasData()) {
-    lightYellow();
     char command = readCommand();
     interpreteCommand(command);
-    changeLockLight();
   }
   delay(15);
-}
-
-void lightRed() {
-  analogWrite(redLEDPin, 255);
-  analogWrite(blueLEDPin, 0);
-  analogWrite(greenLEDPin, 0);
-}
-
-void lightYellow(){
-  analogWrite(redLEDPin, 255);
-  analogWrite(blueLEDPin, 0);
-  analogWrite(greenLEDPin, 255);
-}
-
-void lightGreen() {
-  analogWrite(redLEDPin, 0);
-  analogWrite(blueLEDPin, 0);
-  analogWrite(greenLEDPin, 255);
 }
 
 bool serialHasData() {
@@ -113,7 +90,26 @@ String collectSensorData() {
   piloTemperature = (voltage - 0.5) * 100.0;
   hiveTemperature = temperatureAndHumiditySensor.readTemperature();
   humidity = temperatureAndHumiditySensor.readHumidity();
+  updateLcdScreen(piloTemperature, hiveTemperature, humidity, light);
   return serializeData(piloTemperature, hiveTemperature, humidity, light);
+}
+
+void updateLcdScreen(float piloTemperature, float hiveTemperature, float humidity, float light){
+  int piloTemperatureRough = (int)piloTemperature;
+  int hiveTemperatureRough = (int)hiveTemperature;
+  int humidityRough = (int)humidity;
+  String status;
+  if(locked){
+    status = "Locked  ";
+  }else{
+    status = "Unlocked";
+  }
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  String sensorData = "Ht:" + String(hiveTemperatureRough) + "C   Pt:" + String(piloTemperatureRough) + "C";
+  lcd.print(sensorData);
+  lcd.setCursor(0, 1);
+  lcd.print(status + "  Hm" + String(humidityRough) + String("%"));  
 }
 
 void rotateServo(int position) {
@@ -123,10 +119,5 @@ void rotateServo(int position) {
   }
 }
 
-void changeLockLight(){
- if(locked){ 
-    lightRed();
- }else{
-    lightGreen();
- }
-}
+
+
